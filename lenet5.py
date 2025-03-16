@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 
+
 class LeNet5(nn.Module):
     '''
     Implementation of LeNet-5 architecture for CINIC-10 dataset (32x32x3)
@@ -17,7 +18,7 @@ class LeNet5(nn.Module):
     '''
     
 
-    def __init__(self, dropout_rate):
+    def __init__(self, dropout_rate, init_type):
         super(LeNet5, self).__init__()
 
         # activation function
@@ -46,6 +47,23 @@ class LeNet5(nn.Module):
         # 10 classes in CINIC-10
         self.output = nn.Linear(84, 10)
 
+        self.init_weights(init_type)
+
+
+    def init_weights(self, init_type):
+        '''
+        Initialize weights of the model using He initialization or random initialization (for regularization experiments)
+        '''
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                if init_type == 'he':
+                    nn.init.kaiming_uniform_(m.weight)
+                elif init_type == 'random':
+                    nn.init.uniform_(m.weight)
+
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+
 
     def forward(self, x):
         x = self.c1(x)
@@ -65,4 +83,19 @@ class LeNet5(nn.Module):
             x = self.dropout2(x)
         x = self.output(x)
         return x
+
+
+    def predict(self, x):
+        self.eval()
+        with torch.no_grad():
+            output = self(x)
+            _, predicted = torch.max(output, 1)
+        return predicted
     
+    
+    def predict_proba(self, x):
+        self.eval()
+        with torch.no_grad():
+            output = self(x)
+            probabilities = torch.softmax(output, dim=1)
+        return probabilities
