@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from early_stopping import EarlyStopper
+from tqdm import tqdm
 
 
-def train_model(model, train_loader, val_loader, learning_rate, lr_scheduling, max_epochs, weight_decay, seed):
+def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_scheduling=False, weight_decay=0, seed=123):
     # Set seed for reproducibility
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -22,7 +23,9 @@ def train_model(model, train_loader, val_loader, learning_rate, lr_scheduling, m
 
     early_stopper = EarlyStopper(patience=5)
 
-    for epoch in range(max_epochs):
+    tqdm_epochs = tqdm(range(max_epochs), desc='Epochs', leave=True)
+
+    for epoch in tqdm_epochs:
         model.train()
         running_loss = 0.0
 
@@ -50,11 +53,14 @@ def train_model(model, train_loader, val_loader, learning_rate, lr_scheduling, m
         train_losses.append(average_train_loss)
         val_losses.append(average_val_loss)
 
+        tqdm_epochs.set_postfix(train_loss=average_train_loss, val_loss=average_val_loss)
+
         if early_stopper.early_stop(average_val_loss):
             print(f'Early stopping at epoch {epoch}')
             break
-
-        scheduler.step(running_loss)
+            
+        if lr_scheduling:
+            scheduler.step(running_loss)
 
     return train_losses, val_losses
 
