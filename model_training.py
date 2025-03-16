@@ -13,6 +13,9 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     if lr_scheduling:
@@ -30,6 +33,7 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
         running_loss = 0.0
 
         for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, labels)
@@ -44,6 +48,7 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
 
         with torch.no_grad():
             for inputs, labels in val_loader:
+                inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 running_val_loss += loss.item()

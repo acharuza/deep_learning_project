@@ -85,17 +85,19 @@ class LeNet5(nn.Module):
         return x
 
 
-    def predict(self, x):
+    def predict(self, x, device):
         self.eval()
         with torch.no_grad():
+            x = x.to(device)
             output = self(x)
             _, predicted = torch.max(output, 1)
         return predicted
     
-    
-    def predict_proba(self, x):
+
+    def predict_proba(self, x, device):
         self.eval()
         with torch.no_grad():
+            x = x.to(device)
             output = self(x)
             probabilities = torch.softmax(output, dim=1)
         return probabilities
