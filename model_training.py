@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.optim as optim
 from early_stopping import EarlyStopper
 from tqdm import tqdm
+import random
+import numpy as np
 
 
 def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_scheduling=False, weight_decay=0, seed=123):
@@ -12,6 +14,8 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+    np.random.seed(seed)
+    random.seed(seed)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -19,12 +23,12 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     if lr_scheduling:
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
 
     train_losses = []
     val_losses = []
 
-    early_stopper = EarlyStopper(patience=5)
+    early_stopper = EarlyStopper(patience=10)
 
     tqdm_epochs = tqdm(range(max_epochs), desc='Epochs', leave=True)
 
