@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 
+
 def default_parameters(lr, max_epochs, seed):
     '''
     Default parameters for training
@@ -101,6 +102,14 @@ def random_all(lr, max_epochs, seed):
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/random_all_seed_{seed}.csv', index=False)
     torch.save(cnn.state_dict(), f'saved_models/random_all_seed_{seed}.pth')
 
+def cut_mix(lr, max_epochs, seed):
+    cnn = LeNet5(dropout_rate=0, init_type='random')
+    loader_creator = DataLoaderCreator(seed)
+    train_loader = loader_creator.create_data_loader_cutmix('cinic-10/train', batch_size=128, transform=loader_creator.standard_transform, shuffle=True)
+    val_loader = loader_creator.create_data_loader('cinic-10/valid', batch_size=128, transform=loader_creator.standard_transform, shuffle=False)
+    train_losses, val_losses = train_model(cnn, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr, seed=seed)
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/cut_mix_seed_{seed}.csv', index=False)
+    torch.save(cnn.state_dict(), f'saved_models/cut_mix_seed_{seed}.pth')
 
 if __name__ == "__main__":
     # choose the learning rate, max epochs and seed
@@ -109,4 +118,4 @@ if __name__ == "__main__":
     lr = 0.01
     max_epochs = 50
     seed = 123
-    default_parameters(lr, max_epochs, seed)
+    cut_mix(lr, max_epochs, seed)

@@ -3,6 +3,8 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import random
 import numpy as np
+from torchvision.transforms import v2
+from torch.utils.data import default_collate
 
 class DataLoaderCreator:
 
@@ -53,7 +55,16 @@ class DataLoaderCreator:
     def worker_init_fn(self, worker_id):
         np.random.seed(self.seed)
 
+    def collate_fn(self, batch):
+        cutmix = v2.CutMix(num_classes=10)
+        return cutmix(*default_collate(batch))
+
     def create_data_loader(self, data_dir, batch_size, transform=standard_transform, shuffle=True):
         dataset = datasets.ImageFolder(data_dir, transform=transform)
         data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=6, worker_init_fn=self.worker_init_fn)
+        return data_loader
+    
+    def create_data_loader_cutmix(self, data_dir, batch_size, transform=standard_transform, shuffle=True):
+        dataset = datasets.ImageFolder(data_dir, transform=transform)
+        data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=6, worker_init_fn=self.worker_init_fn, collate_fn=self.collate_fn)
         return data_loader
