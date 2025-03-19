@@ -79,6 +79,23 @@ def dropout(model, lr, max_epochs, seed):
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/{model}_dropout_seed_{seed}.csv', index=False)
     torch.save(cnn.state_dict(), f'saved_models/{model}_dropout_seed_{seed}.pth')
 
+def weight_decay(model, lr, max_epochs, seed):
+    '''
+    Weight decay with 0.0001
+    '''
+    if model == "lenet5":
+        cnn = LeNet5(dropout_rate=0, init_type='random')
+    elif model == "alexnet":
+        cnn = AlexNet(dropout_rate=0, init_type='random')
+    else:
+        raise ValueError("Invalid model name")
+    loader_creator = DataLoaderCreator(seed)
+    train_loader = loader_creator.create_data_loader('cinic-10/train', batch_size=128, transform=loader_creator.standard_transform, shuffle=True)
+    val_loader = loader_creator.create_data_loader('cinic-10/valid', batch_size=128, transform=loader_creator.standard_transform, shuffle=False)
+    train_losses, val_losses = train_model(cnn, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr, weight_decay=0.0001, seed=seed)
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/{model}_weight_decay_seed_{seed}.csv', index=False)
+    torch.save(cnn.state_dict(), f'saved_models/{model}_weight_decay_seed_{seed}.pth')
+
 def random_rotation(model, lr, max_epochs, seed):
     '''
     Random rotation from -20 to 20 degrees
