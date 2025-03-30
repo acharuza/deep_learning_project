@@ -37,12 +37,12 @@ class LeNet5(nn.Module):
         self.c5 = nn.Linear(16*5*5, 120)
 
         # dropout for regularization experiments
-        self.dropout1 = nn.Dropout(dropout_rate) if dropout_rate > 0 else None
+        self.dropout1 = nn.Dropout(dropout_rate)
 
         self.f6 = nn.Linear(120, 84)
 
-        # # dropout for regularization experiments
-        # self.dropout2 = nn.Dropout(dropout_rate) if dropout_rate > 0 else None
+        # dropout for regularization experiments
+        self.dropout2 = nn.Dropout(dropout_rate)
 
         # 10 classes in CINIC-10
         self.output = nn.Linear(84, 10)
@@ -74,10 +74,10 @@ class LeNet5(nn.Module):
         x = self.flatten(x)
         x = self.c5(x)
         x = self.relu(x)
-        if self.dropout1:
-            x = self.dropout1(x)
+        x = self.dropout1(x)
         x = self.f6(x)
         x = self.relu(x)
+        x = self.dropout2(x)
         x = self.output(x)
         return x
 
