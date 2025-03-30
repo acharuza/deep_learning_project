@@ -92,7 +92,7 @@ def train_protonet(model, train_loader, lr=0.001, seed=123):
     return loss_history
     
 
-def create_data_loader(data_dir, n_way, n_shot, n_query, n_episodes, data_fraction, seed=123):
+def create_data_loader(data_dir, n_way, n_shot, n_query, n_episodes, n_tasks, data_fraction, seed=123):
     cinic_mean_RGB = [0.47889522, 0.47227842, 0.43047404]
     cinic_std_RGB = [0.24205776, 0.23828046, 0.25874835]
     transform = transforms.Compose([
@@ -100,16 +100,24 @@ def create_data_loader(data_dir, n_way, n_shot, n_query, n_episodes, data_fracti
         transforms.ToTensor(),
         transforms.Normalize(mean=cinic_mean_RGB, std=cinic_std_RGB)
     ])
-    random.seed(seed)
+    np.random.seed(seed)
 
     data = datasets.ImageFolder(data_dir, transform=transform)
 
-    total_size = len(data)
-    subset_size = int(total_size * data_fraction)
-    indices = random.sample(range(total_size), subset_size)
+    labels = np.array([label for _, label in data.samples])
 
-    data_subset = torch.utils.data.Subset(data, indices)
-    data_subset.get_labels = lambda: [data.targets[i] for i in indices]
+    unique_classes = np.unique(labels)
+    class_indices = {cls: np.where(labels == cls)[0] for cls in unique_classes}
+
+    subset_size_per_class = int((len(data) * data_fraction) / len(unique_classes))
+
+    selected_indices = np.concatenate([
+        np.random.choice(class_indices[cls], min(subset_size_per_class, len(class_indices[cls])), replace=False)
+        for cls in unique_classes
+    ])
+
+    data_subset = torch.utils.data.Subset(data, selected_indices)
+    data_subset.get_labels = lambda: [data.targets[i] for i in selected_indices]
     data_sampler = TaskSampler(data_subset, n_way=n_way, n_shot=n_shot, n_query=n_query, n_tasks=n_episodes)
     data_loader = DataLoader(data_subset, batch_sampler=data_sampler, num_workers=0, pin_memory=True, collate_fn=data_sampler.episodic_collate_fn)
     return data_loader
