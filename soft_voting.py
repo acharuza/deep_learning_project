@@ -1,4 +1,5 @@
 import numpy as np
+import torch.nn as nn
 
 class SoftVotingClassifier:
 
@@ -10,10 +11,13 @@ class SoftVotingClassifier:
             self.weights /= self.weights.sum()
 
     def predict_proba(self, X):
-        weighted_probs = np.zeros((X.shape[0], len(self.classifiers[0].classes_)))
+        self.classifiers[0].eval()
+        first_proba = nn.Softmax(self.classifiers[0](X), dim=1)
+        weighted_probs = np.zeros_like(first_proba)
 
         for clf, weight in zip(self.classifiers, self.weights):
-            probs = clf.predict_proba(X)
+            clf.eval()
+            probs = nn.Softmax(clf(X), dim=1)
             weighted_probs += weight * probs
 
         return weighted_probs / len(self.classifiers)
