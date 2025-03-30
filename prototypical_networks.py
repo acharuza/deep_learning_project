@@ -92,7 +92,7 @@ def train_protonet(model, train_loader, lr=0.001, seed=123):
     return loss_history
     
 
-def create_data_loader(data_dir, n_way, n_shot, n_query, n_episodes, n_tasks, data_fraction, seed=123):
+def create_data_loader(data_dir, n_way, n_shot, n_query, n_episodes, data_fraction, seed=123):
     cinic_mean_RGB = [0.47889522, 0.47227842, 0.43047404]
     cinic_std_RGB = [0.24205776, 0.23828046, 0.25874835]
     transform = transforms.Compose([
@@ -124,7 +124,7 @@ def create_data_loader(data_dir, n_way, n_shot, n_query, n_episodes, n_tasks, da
 
 def experiment_protonet(n_shot, n_query, n_episodes, n_tasks, data_fraction, lr=0.001, seed=123):
     train_loader = create_data_loader("cinic-10/train", n_way=10, n_shot=n_shot, n_query=n_query, n_episodes=n_episodes, data_fraction=data_fraction, seed=seed)
-    test_loader = create_data_loader("cinic-10/test", n_way=10, n_shot=n_shot, n_query=n_query, n_episodes=n_tasks, data_fraction=data_fraction, seed=seed)
+    test_loader = create_data_loader("cinic-10/test", n_way=10, n_shot=n_shot, n_query=n_query, n_episodes=n_tasks, data_fraction=1, seed=seed)
     feature_extractor = resnet18(weights=ResNet18_Weights.DEFAULT)
     feature_extractor.fc = nn.Flatten()
     model = ProtoNet(feature_extractor)
