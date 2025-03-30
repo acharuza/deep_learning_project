@@ -41,8 +41,8 @@ class LeNet5(nn.Module):
 
         self.f6 = nn.Linear(120, 84)
 
-        # dropout for regularization experiments
-        self.dropout2 = nn.Dropout(dropout_rate) if dropout_rate > 0 else None
+        # # dropout for regularization experiments
+        # self.dropout2 = nn.Dropout(dropout_rate) if dropout_rate > 0 else None
 
         # 10 classes in CINIC-10
         self.output = nn.Linear(84, 10)
@@ -57,12 +57,11 @@ class LeNet5(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
                 if init_type == 'he':
-                    nn.init.kaiming_uniform_(m.weight)
+                    nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
                 elif init_type == 'random':
                     nn.init.uniform_(m.weight)
 
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
+                m.bias.data.fill_(0)
 
 
     def forward(self, x):
@@ -79,19 +78,13 @@ class LeNet5(nn.Module):
             x = self.dropout1(x)
         x = self.f6(x)
         x = self.relu(x)
-        if self.dropout2:
-            x = self.dropout2(x)
         x = self.output(x)
         return x
 
 
     def predict(self, x, device):
-        self.eval()
-        with torch.no_grad():
-            x = x.to(device)
-            output = self(x)
-            _, predicted = torch.max(output, 1)
-        return predicted
+        proba = self.predict_proba(x, device)
+        return torch.argmax(proba, dim=1)
     
 
     def predict_proba(self, x, device):
